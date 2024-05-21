@@ -42,7 +42,11 @@ api = Api(app)
 migrate = Migrate(app, db)
 blacklist = set()
 
-
+# Check if the token is in the blacklist
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload['jti']
+    return jti in blacklist
 
 
 #######################################DAVE ROUTE FOR HOME DEFAULT ROUTE (WORKS )AND GENERATING SECURITY PASSWORD##############################################################################################
