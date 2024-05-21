@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify,Blueprint
 from flask_sqlalchemy import SQLAlchemy
 # from flask_marshmallow import Marshmallow
-from flask_jwt_extended import JWTManager,jwt_required, create_access_token,get_jwt_identity,create_refresh_token,verify_jwt_in_request,create_refresh_token, jwt_required, get_jwt_identity, get_jti, jwt_refresh_token_required
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token, create_refresh_token, 
+    get_jwt_identity, get_jti, jwt_refresh_token_required,verify_jwt_in_request
+)
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 import os
