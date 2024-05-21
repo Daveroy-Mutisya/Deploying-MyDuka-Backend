@@ -1,10 +1,6 @@
 from flask import Flask, request, jsonify,Blueprint
-from flask_sqlalchemy import SQLAlchemy
-# from flask_marshmallow import Marshmallow
-from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, create_refresh_token, 
-    get_jwt_identity, get_jti,verify_jwt_in_request,jwt_refresh_token_required
-)
+
+from flask_jwt_extended import JWTManager,jwt_required, create_access_token,get_jwt_identity,create_refresh_token,verify_jwt_in_request
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 import os
@@ -37,20 +33,12 @@ INVITE_REGISTER_TOKEN = os.environ.get('INVITE_REGISTER_TOKEN')
 
 # Initialize Flask extensions
 models.db.init_app(app)
-# ma = Marshmallow(app)
+
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 mail = Mail(app)
 api = Api(app)
 migrate = Migrate(app, db)
-blacklist = set()
-
-# Check if the token is in the blacklist
-@jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload):
-    jti = jwt_payload['jti']
-    return jti in blacklist
-
 
 #######################################DAVE ROUTE FOR HOME DEFAULT ROUTE (WORKS )AND GENERATING SECURITY PASSWORD##############################################################################################
 
@@ -110,32 +98,6 @@ class TokenRefresh(Resource):
             return jsonify(error=str(e)), 500
 
 api.add_resource(TokenRefresh, '/refresh-token')
-
-
-###################################################ROUTE FOR LOGOUT##############################################################################################
-@jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload):
-    jti = jwt_payload['jti']
-    return jti in blacklist
-
-class Logout(Resource):
-    @jwt_required()
-    def post(self):
-        jti = get_jti(request.headers['Authorization'].split()[1])
-        blacklist.add(jti)
-        return {"msg": "Access token revoked"}, 200
-
-class LogoutRefresh(Resource):
-    @jwt_refresh_token_required
-    def post(self):
-        jti = get_jti(request.headers['Authorization'].split()[1])
-        blacklist.add(jti)
-        return {"msg": "Refresh token revoked"}, 200
-
-api.add_resource(Logout, '/logout')
-api.add_resource(LogoutRefresh, '/logout_refresh')
-
-
 
 ###############################################PROFILE ROUTE ---------WORKS-------------- (FOR ALL USERS)#########################################################################################
 class Profile:
@@ -979,5 +941,5 @@ def delete_request(id, request_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port = 3000)
+    app.run(debug=True, port = 5000)
     
