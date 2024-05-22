@@ -16,7 +16,6 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
     image = db.Column(db.String(100), nullable=True)
     role = db.Column(db.String(20), nullable=False)
-    store_id = db.Column(db.Integer, db.ForeignKey('stores.id'), nullable=True)  # Add this line
     entries = db.Column(db.Integer, default=0, nullable=True)
     active = db.Column(db.Boolean, default=True)
 
@@ -27,7 +26,6 @@ class User(db.Model):
         self.password = password
         self.image = image
         self.role = role
-        self.store_id = store_id  # Initialize store_id
         self.active = True
 
     @validates('email')
