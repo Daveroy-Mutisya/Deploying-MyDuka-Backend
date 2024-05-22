@@ -80,23 +80,13 @@ class Login(Resource):
 
         access_token = create_access_token(identity={'email': user.email, 'role': user.role})
         refresh_token = create_refresh_token(identity={'email': user.email, 'role': user.role})
-        return {"access_token": access_token, "refresh_token": refresh_token}, 200
+        return {"access_token": access_token,}, 200
 
 api.add_resource(Login, '/login')
 
 
 #################### ROUTE FOR TokenRefresh (WORKS) IS FOR EVERYONE #################################################################################################### 
-class TokenRefresh(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
-        try:
-            current_user = get_jwt_identity()
-            access_token = create_access_token(identity=current_user)
-            return {'access_token': access_token}, 200
-        except Exception as e:
-            return jsonify(error=str(e)), 500
 
-api.add_resource(TokenRefresh, '/refresh-token')
 
 ###############################################PROFILE ROUTE ---------WORKS-------------- (FOR ALL USERS)#########################################################################################
 class Profile:
