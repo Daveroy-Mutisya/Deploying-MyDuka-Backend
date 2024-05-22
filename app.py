@@ -501,6 +501,47 @@ def get_product_performance(store_id):
 
     return jsonify(product_performance), 200
 
+###########################################ROUTE FOR GETTING REQUEST#####################################################################################################################
+@app.route('/store/<int:store_id>/requests', methods=['GET'])
+@jwt_required()  # Requires authentication
+def get_store_requests(store_id):
+    current_user = get_jwt_identity()
+
+    # Check if the user is authenticated as a merchant, admin, or clerk
+    if current_user['role'] not in ['merchant', 'admin', 'clerk']:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Query the store by ID
+    store = Store.query.get(store_id)
+    if not store:
+        return jsonify({'error': 'Store not found'}), 404
+
+    # # Check if the store belongs to the current user (merchant)
+    # if store.user_id != current_user['id'] and current_user['role'] == 'merchant':
+    #     return jsonify({'error': 'Unauthorized - Store does not belong to user'}), 401
+
+    # Query requests for the specified store
+    requests = Request.query.filter_by(store_id=store_id).all()
+
+    # Serialize requests into a format suitable for the API response
+    serialized_requests = []
+    for request in requests:
+        serialized_request = {
+            'id': request.id,
+            'store_id': request.store_id,
+            'product_id': request.product_id,
+            'product_name': request.product.name,
+            'quantity': request.quantity,
+            'requester_name': request.requester_name,
+            'requester_contact': request.requester_contact,
+            'status': request.status
+        }
+        serialized_requests.append(serialized_request)
+
+    # Return the serialized requests as JSON response with status code 200
+    return jsonify({'requests': serialized_requests}), 200
+
+
 #######################################ROUTE FOR GETTING PAYMENT AND PAYMENT DETAILS PER STORE (MERCHANT AND ADMIN ONLY)-----------WORKS----------##############################################################################################
 @app.route('/store/<int:store_id>/payments', methods=['GET'])
 @jwt_required()  # Requires authentication
@@ -508,7 +549,7 @@ def get_store_payments(store_id):
     current_user = get_jwt_identity()
 
     # Check if the user is authenticated as a merchant
-    if current_user['role'] != ['merchant','admin']:
+    if current_user['role'] != ['merchant','admin','clerk']:
         return jsonify({'error': 'Unauthorized - Role not merchant'}), 401
 
     # Query the store by ID
