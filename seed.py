@@ -1,6 +1,6 @@
 from flask_bcrypt import Bcrypt
-from app.app import app, db
-from app.models import User, Store, Product, Payment, PaymentStatus, Request
+from app import app
+from models import User, Store, Product, Payment, PaymentStatus, Request,db
 from datetime import datetime, date 
 
 
