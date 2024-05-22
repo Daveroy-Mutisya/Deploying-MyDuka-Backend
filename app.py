@@ -38,6 +38,7 @@ jwt = JWTManager(app)
 mail = Mail(app)
 api = Api(app)
 migrate = Migrate(app, db)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 #######################################DAVE ROUTE FOR HOME DEFAULT ROUTE (WORKS )AND GENERATING SECURITY PASSWORD##############################################################################################
 
