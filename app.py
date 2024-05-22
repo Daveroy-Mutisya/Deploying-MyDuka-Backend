@@ -80,13 +80,24 @@ class Login(Resource):
 
         access_token = create_access_token(identity={'email': user.email, 'role': user.role})
         refresh_token = create_refresh_token(identity={'email': user.email, 'role': user.role})
-        return {"access_token": access_token,}, 200
+        return {"access_token": access_token, "refresh_token": refresh_token}, 200
+
 
 api.add_resource(Login, '/login')
 
 
 #################### ROUTE FOR TokenRefresh (WORKS) IS FOR EVERYONE #################################################################################################### 
+class TokenRefresh(Resource):
+    @jwt_required(refresh=True)
+    def post(self):
+        try:
+            current_user = get_jwt_identity()
+            access_token = create_access_token(identity=current_user)
+            return {'access_token': access_token}, 200
+        except Exception as e:
+            return jsonify(error=str(e)), 500
 
+api.add_resource(TokenRefresh, '/refresh-token')
 
 ###############################################PROFILE ROUTE ---------WORKS-------------- (FOR ALL USERS)#########################################################################################
 class Profile:
@@ -158,17 +169,17 @@ class Profile:
 app.register_blueprint(profile_bp)
 
 #######################################DAVE ROUTE FOR SENDING ADMINS INVITES THROUGH EMAILS(MERCHANT ONLY) ---------WORKS--------------##############################################################################################
-
 @app.route('/invite-admin', methods=['POST'])
+@jwt_required() 
 def invite_admin():
     data = request.json
     email = data.get('email')
     store_id = data.get('store_id')  # Add store ID to the request data
 
-    # Check if the email belongs to the merchant (superuser)
-    if email != 'myduka7@gmail.com':  # Change this to your superuser email
+    current_user = get_jwt_identity()
+    if current_user['role'] != 'merchant':
         return jsonify({'error': 'Unauthorized'}), 401
-
+    
     # Check if the store exists
     store = Store.query.get(store_id)
     if not store:
@@ -186,6 +197,7 @@ def invite_admin():
     mail.send(msg)
 
     return jsonify({'message': f'Registration link sent successfully for {store.name}'}), 200
+
 
 
 #######################################################################################################################################################################
