@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify,Blueprint
-
 from flask_jwt_extended import JWTManager,jwt_required, create_access_token,get_jwt_identity,create_refresh_token,verify_jwt_in_request
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
