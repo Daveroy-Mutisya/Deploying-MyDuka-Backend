@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,Blueprint
+from flask import Flask, request, jsonify,Blueprint,make_response
 from flask_jwt_extended import JWTManager,jwt_required, create_access_token,get_jwt_identity,create_refresh_token,verify_jwt_in_request
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
@@ -6,7 +6,7 @@ import os
 from models import db, User,Product,Store,PaymentStatus,Payment,Request
 from flask_restful import Api, Resource
 from flask_migrate import Migrate
-from flask_cors import CORS
+from flask_cors import CORS,cross_origin
 import models
 from flask.views import MethodView
 from datetime import timedelta
@@ -14,6 +14,8 @@ import secrets
 import string
 from datetime import datetime
 from werkzeug.security import generate_password_hash
+from flask_restful import Resource, Api, reqparse
+import json
 
 
 
@@ -373,96 +375,107 @@ def register_clerk():
 
 ####################################### ROUTES FOR STORES (MERCHANT ONLY) --------WORKS-------##############################################################################################
 
-@app.route('/stores/', methods=['GET'])
-@jwt_required()  # Requires authentication
-def get_stores():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'merchant':
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Assuming the Merchant model has a stores relationship
-    merchant = User.query.filter_by(id=current_user['id']).first()
-    if not merchant:
-        return jsonify({'error': 'Merchant not found'}), 404
-    
-    stores = merchant.stores
-    
-    # Convert stores to a list of dictionaries
-    stores_list = []
-    for store in stores:
-        store_data = {
-            'id': store.id,
-            'name': store.name,
-            'location': store.location,
-            # Add more fields as needed
-        }
-        stores_list.append(store_data)
-    
-    return jsonify({'stores': stores_list}), 200
+class Stores(Resource):
+    @jwt_required()  # Requires authentication
+    @cross_origin() 
+    def get(self):
+        current_user = get_jwt_identity()
+        if current_user['role'] != 'merchant':
+            return make_response(jsonify({'error': 'Unauthorized'}), 401)
 
-####################################ROUTE FOR CREATING A STORE(MERCHANT ONLY)######################################---------WORKS--------------#####################################################
-# Add store (POST)
-@app.route('/stores', methods=['POST'])
-@jwt_required()
-def create_store():
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'merchant':
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    data = request.json
-    name = data.get('name')
-    image = data.get('image')
-    location = data.get('location')
-    if not name or not image or not location:
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    new_store = Store(name=name, image=image, location=location, user_id=current_user['id'])
-    db.session.add(new_store)
-    db.session.commit()
+        # Query the User model to get the merchant
+        merchant = User.query.filter_by(id=5, role='merchant').first()
+        if not merchant:
+            return make_response(jsonify({'error': 'Merchant not found'}), 404)
+        
+        stores = merchant.stores
+        
+        # Convert stores to a list of dictionaries
+        stores_list = []
+        for store in stores:
+            store_data = {
+                'id': store.id,
+                'name': store.name,
+                'location': store.location,
+                'image': store.image
+                # Add more fields as needed
+            }
+            stores_list.append(store_data)
+        
+        # Convert the list of dictionaries to JSON
+        return make_response(jsonify({'stores': stores_list}), 200)
 
-    return jsonify({'message': 'Store created successfully'}), 201
+    @jwt_required()
+    @cross_origin() 
+    def post(self):
+        current_user = get_jwt_identity()
+        if current_user['role'] != 'merchant':
+            return make_response(jsonify({'error': 'Unauthorized'}), 401)
+        
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, required=True)
+        parser.add_argument('image', type=str, required=True)
+        parser.add_argument('location', type=str, required=True)
+        args = parser.parse_args()
+        
+        name = args['name']
+        image = args['image']
+        location = args['location']
+        
+        new_store = Store(name=name, image=image, location=location, user_id=current_user['id'])
+        db.session.add(new_store)
+        db.session.commit()
 
-###############################################ROUTE FOR EDITING A STORE(MERCHANT ONLY)###################---------WORKS--------------##############################################################################
-# Edit store (PATCH)
-@app.route('/stores/<int:store_id>', methods=['PATCH'])
-@jwt_required()
-def edit_store(store_id):
-    current_user = get_jwt_identity()
-    store = Store.query.filter_by(id=store_id, user_id=current_user['id']).first()
-    if not store:
-        return jsonify({'error': 'Store not found'}), 404
-    
-    data = request.json
-    name = data.get('name')
-    image = data.get('image')
-    location = data.get('location')
-    if not name or not image or not location:
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    store.name = name
-    store.image = image
-    store.location = location
-    db.session.commit()
+        return make_response(jsonify({'message': 'Store created successfully'}), 201)
 
-    return jsonify({'message': 'Store updated successfully'}), 200
+    @jwt_required()
+    @cross_origin() 
+    def patch(self, store_id):
+        current_user = get_jwt_identity()
+        store = Store.query.filter_by(id=store_id, user_id=current_user['id']).first()
+        if not store:
+            return make_response(jsonify({'error': 'Store not found'}), 404)
+        
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, required=True)
+        parser.add_argument('image', type=str, required=True)
+        parser.add_argument('location', type=str, required=True)
+        parser.add_argument('image', type=str, required=True)
+        args = parser.parse_args()
+        
+        store.name = args['name']
+        store.image = args['image']
+        store.location = args['location']
+        db.session.commit()
 
-########################################ROUTE FOR DELETING A STORE (MERCHANT ONLY)############################################---------(WORKS)--------------###############################
-# Delete store (DELETE)
-@app.route('/stores/<int:store_id>', methods=['DELETE'])
-@jwt_required()
-def delete_store(store_id):
-    current_user = get_jwt_identity()
-    if current_user['role'] != 'merchant':
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    store = Store.query.filter_by(id=store_id, user_id=current_user['id']).first()
-    if not store:
-        return jsonify({'error': 'Store not found'}), 404
-    
-    db.session.delete(store)
-    db.session.commit()
+        return make_response(jsonify({'message': 'Store updated successfully'}), 200)
 
-    return jsonify({'message': 'Store deleted successfully'}), 200
+    @jwt_required()
+    @cross_origin() 
+    def delete(self, store_id):
+        current_user = get_jwt_identity()
+        if current_user['role'] != 'merchant':
+            return make_response(jsonify({'error': 'Unauthorized'}), 401)
+        
+        store = Store.query.filter_by(id=store_id, user_id=current_user['id']).first()
+        if not store:
+            return make_response(jsonify({'error': 'Store not found'}), 404)
+        
+        db.session.delete(store)
+        db.session.commit()
+
+        return make_response(jsonify({'message': 'Store deleted successfully'}), 200)
+
+
+api.add_resource(Stores, '/stores', '/stores/<int:store_id>')
+
+# Error handling for better debug information
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Log the error
+    app.logger.error(f'Error: {e}')
+    # Return a JSON response with the error message
+    return make_response(jsonify({'error': str(e)}), 500)
 
 
 ####################################### ROUTE FOR GETTING STORE-PERFORMANCE (MERCHANT ONLY)------WORKS--------##############################################################################################
@@ -849,7 +862,6 @@ def update_product(id, product_id):
 
     return jsonify({'message': 'Product updated successfully', 'product': updated_product_info}), 200
 
-################################################################ROUTES FOR ADD/REGISTERING REQUESTS(CLERK ONLY)----------WORKS-----------######################################################################################
 
 @app.route('/stores/<int:id>/register-request', methods=['POST'])
 @jwt_required()  # Requires authentication
@@ -903,7 +915,7 @@ def add_request(id):
     else:
         return jsonify({"message": "Unauthorized"}), 401
 
-###########################################ROUTE FOR EDITING/UPDATING REQUEST(CLERK AND ADMIN ONLY)---------(WORKS)---------------############################################################################################
+
     
 @app.route('/stores/<int:store_id>/requests/<int:request_id>', methods=['PATCH'])
 @jwt_required()  # Requires authentication
@@ -950,8 +962,22 @@ def update_request(store_id, request_id):
 
     return jsonify({'message': 'Request updated successfully', 'request': updated_request_info}), 200
 
-
-
+@app.route('/stores/<int:id>/request/<int:request_id>', methods=['DELETE'])
+@jwt_required()
+def delete_request(id, request_id):
+    current_user = get_jwt_identity()
+    
+    if current_user['role'] == 'clerk':
+        request = Request.query.filter_by(id=request_id, store_id=id).first()
+        
+        if request:
+            db.session.delete(request)
+            db.session.commit()
+            return jsonify({'message': 'Request deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Request not found'}), 404
+    else:
+        return jsonify({"message": "Unauthorized"}), 401
     
 ###############################################################ROUTE FOR DELETING PRODUCTS(CLERK ONLY) ---------(WORKS)--------------#######################################################################
 @app.route('/stores/<int:id>/product/<int:product_id>', methods=['DELETE'])
@@ -971,23 +997,7 @@ def delete_product(id, product_id):
     else:
         return jsonify({"message": "Unauthorized"}), 401
 
-################################################ROUTES FOR DELETING REQUESTS(CLERK ONLY)---------(WORKS)--------------###################################################################################################
-@app.route('/stores/<int:id>/request/<int:request_id>', methods=['DELETE'])
-@jwt_required()
-def delete_request(id, request_id):
-    current_user = get_jwt_identity()
-    
-    if current_user['role'] == 'clerk':
-        request = Request.query.filter_by(id=request_id, store_id=id).first()
-        
-        if request:
-            db.session.delete(request)
-            db.session.commit()
-            return jsonify({'message': 'Request deleted successfully'}), 200
-        else:
-            return jsonify({'error': 'Request not found'}), 404
-    else:
-        return jsonify({"message": "Unauthorized"}), 401
+
 
 
 ############################################################################################################################################################################
