@@ -39,8 +39,19 @@ jwt = JWTManager(app)
 mail = Mail(app)
 api = Api(app)
 migrate = Migrate(app, db)
-CORS(app)
-CORS(app, origins=['http://localhost:5173'])
+# Configure CORS
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "allow_headers": ["Content-Type", "Authorization"],
+    "supports_credentials": True
+}})
+
+@app.route('/api/data', methods=["GET", "POST", "PUT", "DELETE"])
+def handle_data():
+    return 'This is some data from the API.'
+
+
 #######################################DAVE ROUTE FOR HOME DEFAULT ROUTE (WORKS )AND GENERATING SECURITY PASSWORD##############################################################################################
 
 @app.route('/', methods=['GET'])
@@ -980,6 +991,9 @@ def delete_request(id, request_id):
 
 
 ############################################################################################################################################################################
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port = 5000)
