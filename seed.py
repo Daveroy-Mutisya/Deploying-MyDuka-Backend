@@ -41,10 +41,10 @@ def main():
 
 
         products = [
-            Product(name="Milk",price=70,stock_quantity=50,buying_price=600,selling_price=670,store_id=1,image="https://i0.wp.com/www.neokingshop.online/wp-content/uploads/2020/07/KCC-gold-crown-log-life-milk-carton.jpeg?fit=302%2C302&ssl=1",sales=10,sales_date=datetime.utcnow()),
-            Product(name="Salt",price=90,stock_quantity=20,buying_price=90,selling_price=180,store_id=2,image="https://greenspoon.co.ke/wp-content/uploads/2023/10/Greenspoon-Kensalt-2Kg-1.jpg",sales=40,sales_date=datetime.utcnow()),
-            Product(name="Bread",price=20,stock_quantity=70,buying_price=90,selling_price=120,store_id=3,image="https://www.beeqasi.co.ke/wp-content/uploads/2020/08/SUPERLOAF.jpeg",sales=30,sales_date=datetime.utcnow()),
-            Product(name="Sugar",price=100,stock_quantity=50,buying_price=100,selling_price=120,store_id=4,image="https://i.pinimg.com/236x/0d/2f/98/0d2f9889b866218b70d201f75f144dfa.jpg",sales=50,sales_date=datetime.utcnow())
+            Product(name="Milk",price=70,stock_quantity=50,buying_price=600,selling_price=670,store_id=1,image="https://i0.wp.com/www.neokingshop.online/wp-content/uploads/2020/07/KCC-gold-crown-log-life-milk-carton.jpeg?fit=302%2C302&ssl=1"),
+            Product(name="Salt",price=90,stock_quantity=20,buying_price=90,selling_price=180,store_id=2,image="https://greenspoon.co.ke/wp-content/uploads/2023/10/Greenspoon-Kensalt-2Kg-1.jpg"),
+            Product(name="Bread",price=20,stock_quantity=70,buying_price=90,selling_price=120,store_id=3,image="https://www.beeqasi.co.ke/wp-content/uploads/2020/08/SUPERLOAF.jpeg"),
+            Product(name="Sugar",price=100,stock_quantity=50,buying_price=100,selling_price=120,store_id=4,image="https://i.pinimg.com/236x/0d/2f/98/0d2f9889b866218b70d201f75f144dfa.jpg")
         ]
 
         db.session.add_all(products)

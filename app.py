@@ -542,14 +542,13 @@ def get_store_requests(store_id):
     serialized_requests = []
     for request in requests:
         serialized_request = {
-            'id': request.id,
-            'store_id': request.store_id,
-            'product_id': request.product_id,
-            'product_name': request.product.name,
-            'quantity': request.quantity,
-            'requester_name': request.requester_name,
-            'requester_contact': request.requester_contact,
-            'status': request.status
+            'name': request.product.name,
+            'price': request.product.price,
+            'stock_quantity': request.product.stock_quantity,
+            'buying_price': request.product.buying_price,
+            'selling_price': request.product.selling_price,
+            'store_id': request.product.store_id,
+            'image': request.product.image,
         }
         serialized_requests.append(serialized_request)
 
