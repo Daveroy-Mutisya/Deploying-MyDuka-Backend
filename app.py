@@ -705,11 +705,15 @@ api.add_resource(PaymentManagement, '/store/<int:store_id>/payments/<int:payment
 class Products(Resource):
     @jwt_required()
     @cross_origin()
-    def get(self, id):
+    def get(self, id=None):
         current_user = get_jwt_identity()
 
         if current_user['role'] in ['merchant', 'admin', 'clerk']:
-            products = Product.query.filter_by(store_id=id).all()
+            if id is not None:
+                products = Product.query.filter_by(store_id=id).all()
+            else:
+                products = Product.query.all()
+
             serialized_products = [product.serialize() for product in products]
             return jsonify(serialized_products), 200
         else:
@@ -797,7 +801,8 @@ class Products(Resource):
             return jsonify({"message": "Unauthorized"}), 401
 
 # Register the resource and specify the routes
-api.add_resource(Products, '/store/<int:id>/products', '/store/<int:id>/products/<int:product_id>')
+api.add_resource(Products, '/store/products', '/store/<int:id>/products/<int:product_id>')
+
 
 
 if __name__ == '__main__':
