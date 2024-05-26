@@ -17,7 +17,7 @@ from werkzeug.security import generate_password_hash
 from flask_restful import Resource, Api, reqparse
 import json
 import logging
-
+from werkzeug.utils import secure_filename
 
 
 
@@ -230,6 +230,7 @@ def check_if_user_is_active():
 api.add_resource(AdminManagement, '/invite-admin', '/admins', '/admin/<int:admin_id>')
 api.add_resource(AdminActivation, '/admin/<int:id>/<string:action>')
 
+
 class RegisterAdmin(Resource):
     @cross_origin()
     def post(self, store_id):
@@ -243,7 +244,7 @@ class RegisterAdmin(Resource):
         email = data.get('email')
         username = data.get('username')
         password = data.get('password')
-        image = data.get('image')
+        image = data.get('image')  # Image is optional
         role = 'admin'
 
         if not all([name, email, username, password]):
@@ -274,6 +275,7 @@ class RegisterAdmin(Resource):
 
 # Add this resource to your API
 api.add_resource(RegisterAdmin, '/store/<int:store_id>/register')
+
 
 ####################################################################################################################################################################
 # AdminManagement is a class that inherits from flask_restful.Resource.
