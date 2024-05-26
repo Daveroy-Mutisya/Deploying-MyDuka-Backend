@@ -143,9 +143,8 @@ class AdminManagement(Resource):
         store = Store.query.get(store_id)
         if not store:
             return jsonify({'error': 'Store not found'}), 404
-
-        access_token = create_access_token(identity=email)
-        registration_link = f"http://myduka.com/store/{store_id}/register-admin?token={access_token}"
+        
+        registration_link = f"http://myduka.com/store/{store_id}/register-admin?token={INVITE_REGISTER_TOKEN}"
 
         msg = Message('Admin Registration Link', sender='MyDukaMerchant@gmail.com', recipients=[email])
         msg.body = f"Use the following link to register as an admin for {store.name}: {registration_link}"
@@ -153,32 +152,6 @@ class AdminManagement(Resource):
 
         return jsonify({'message': f'Registration link sent successfully for {store.name}'}), 200
 
-    @cross_origin()
-    def put(self, store_id):
-        token = request.args.get('token')
-        data = request.json
-        name = data.get('name')
-        email = data.get('email')
-        username = data.get('username')
-        password = data.get('password')
-        image = data.get('image')
-        role = 'admin'
-
-        try:
-            if token == INVITE_REGISTER_TOKEN:
-                if User.query.filter_by(email=email).first():
-                    return jsonify({'error': 'User already exists'}), 400
-
-                new_admin = User(name=name, email=email, username=username, image=image, role=role)
-                new_admin.set_password(password)  # Ensure password is hashed using a method in your User model
-                db.session.add(new_admin)
-                db.session.commit()
-
-                return jsonify({'message': 'Admin registered successfully'}), 201
-            else:
-                return jsonify({'error': 'Invalid token'}), 401
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
 
     @jwt_required()
     @cross_origin()
@@ -254,8 +227,53 @@ def check_if_user_is_active():
         except Exception as e:
             pass
 
-api.add_resource(AdminManagement, '/invite-admin', '/store/<int:store_id>/register-admin', '/admins', '/admin/<int:admin_id>')
+api.add_resource(AdminManagement, '/invite-admin', '/admins', '/admin/<int:admin_id>')
 api.add_resource(AdminActivation, '/admin/<int:id>/<string:action>')
+
+class RegisterAdmin(Resource):
+    @cross_origin()
+    def post(self, store_id):
+        token = request.args.get('token')
+        data = request.json
+
+        if not data:
+            return jsonify({'error': 'No input data provided'}), 400
+
+        name = data.get('name')
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+        image = data.get('image')
+        role = 'admin'
+
+        if not all([name, email, username, password]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        try:
+            if token == INVITE_REGISTER_TOKEN:
+                if User.query.filter_by(email=email).first():
+                    return jsonify({'error': 'User already exists'}), 400
+
+                new_admin = User(
+                    name=name,
+                    email=email,
+                    username=username,
+                    password=password,
+                    image=image,
+                    role=role,
+                    store_id=store_id
+                )
+                db.session.add(new_admin)
+                db.session.commit()
+
+                return jsonify({'message': 'Admin registered successfully'}), 201
+            else:
+                return jsonify({'error': 'Invalid token'}), 401
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+# Add this resource to your API
+api.add_resource(RegisterAdmin, '/store/<int:store_id>/register')
 
 ####################################################################################################################################################################
 # AdminManagement is a class that inherits from flask_restful.Resource.
