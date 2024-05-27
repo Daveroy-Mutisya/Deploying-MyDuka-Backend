@@ -144,7 +144,7 @@ class AdminManagement(Resource):
         if not store:
             return jsonify({'error': 'Store not found'}), 404
         
-        registration_link = f"http://myduka.com/store/{store_id}/register-admin?token={INVITE_REGISTER_TOKEN}"
+        registration_link = f"https://my-duka-frontend-final-w4b3.vercel.app/store/{store_id}/register-admin?token={INVITE_REGISTER_TOKEN}"
 
         msg = Message('Admin Registration Link', sender='MyDukaMerchant@gmail.com', recipients=[email])
         msg.body = f"Use the following link to register as an admin for {store.name}: {registration_link}"
